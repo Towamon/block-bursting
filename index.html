@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>実績</title>
+  <style>
+  
+body {
+  font-family: sans-serif;
+      padding: 2rem;
+      margin: 0;
+      background-image: url('https://img.freepik.com/free-photo/abstract-luxury-soft-red-background-christmas-valentines-layout-designstudioroom-web-template-busine_1258-52754.jpg?ga=GA1.1.1456035980.1746671026&semt=ais_hybrid&w=740');
+      background-size: cover;
+      background-position: center center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      color: #fff;
+    }
+
+
+
+
+    h1, h2 {
+      text-align: center;
+      text-shadow: 2px 2px 6px #000;
+      margin-bottom: 1.5rem;
+    }
+
+    #playerSection, #filterSection {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+
+    #playerName {
+      padding: 0.6rem;
+      font-size: 1rem;
+      border-radius: 4px;
+      border: none;
+      width: 200px;
+    }
+
+    button {
+      padding: 0.6rem 1.2rem;
+      margin-left: 0.5rem;
+      background: crimson;
+      border: none;
+      color: white;
+      font-weight: bold;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    #stats {
+      background: rgba(0, 0, 0, 0.75);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin: 1.5rem auto;
+      max-width: 700px;
+      font-size: 1.1rem;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      max-width: 900px;
+      margin: 1rem auto;
+    }
+
+    
+  li {
+    background: rgba(0, 0, 0, 0.6);
+    margin: 1rem 0;
+    padding: 1rem;
+    border-radius: 6px;
+    border: 2px solid #ccc;
+    position: relative;
+    transition: 0.2s;
+    cursor: pointer;
+    color: white;
+  }
+
+  li.done {
+    border-color: crimson;
+    background: rgba(90, 0, 0, 0.7);
+  }
+
+  .trophy-title {
+    font-size: 1.2rem;
+    font-weight: bold;
+    position: relative; /* スタンプの基準点にする */
+  }
+
+  .stamp {
+    position: absolute;
+    top: 1.0rem; /* タイトル上に表示 */
+    left: 85%;
+    transform: translateX(-50%) rotate(-15deg);
+    font-size: 2rem;
+    color: gold;
+    z-index: 1;
+    text-shadow: 1px 1px 2px #000;
+  }
+    
+    .trophy-title {
+      font-size: 1.25rem;
+      font-weight: bold;
+      margin-bottom: 0.4rem;
+    }
+
+    .stars {
+      color: gold;
+      font-size: 1.1rem;
+      margin-bottom: 0.3rem;
+    }
+
+    .desc {
+      color: #ddd;
+      font-size: 0.95rem;
+    }
+
+    #modal {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.6);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    #modal.show {
+      display: flex;
+    }
+
+    .modal-content {
+      background: #222;
+      color: #fff;
+      padding: 2rem;
+      border-radius: 10px;
+      text-align: center;
+      animation: pop 0.4s ease-out;
+    }
+
+    @keyframes pop {
+      0% { transform: scale(0.5); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    select {
+      padding: 0.5rem;
+      border-radius: 4px;
+      border: none;
+      font-size: 1rem;
+    }
+
+    .date-label {
+      font-size: 0.85rem;
+      margin-top: 0.6rem;
+      color: #ccc;
+    }
+  </style>
+</head>
+<body>
+  <h1>🏆 要塞実績</h1>
+
+<div id="playerSection">
+    <label for="playerName">プレイヤー名：</label>
+    <input id="playerName" type="text" placeholder="名前を入力" />
+    <button onclick="savePlayerName()">保存</button>
+    <div id="playerDisplay"></div>
+  </div>
+ 
+
+  <div id="filterSection">
+    <label for="filterSelect">フィルター：</label>
+    <select id="filterSelect" onchange="renderAchievements()">
+      <option value="all">すべて</option>
+      <option value="done">達成済み</option>
+      <option value="undone">未達成</option>
+      <option value="star1">★1</option>
+      <option value="star2">★2</option>
+      <option value="star3">★3</option>
+      <option value="star4">★4</option>
+      <option value="star5">★5</option>
+      <option value="star6">★6</option>
+      <option value="star7">★7</option>
+    </select>
+  </div>
+
+  <div id="stats"></div>
+  <ul id="list"></ul>
+
+  <div id="modal">
+    <div class="modal-content">
+      <h2>🏅 トロフィー獲得！</h2>
+      <p id="modalMsg"></p>
+    </div>
+  </div>
+
+
+
+<script>
+  const list = document.getElementById('list');
+  const modal = document.getElementById('modal');
+  const modalMsg = document.getElementById('modalMsg');
+  const stats = document.getElementById('stats');
+  const playerNameInput = document.getElementById('playerName');
+  const playerDisplay = document.getElementById('playerDisplay');
+
+  const achievements = [
+    { title: "ようこそ諸君！", difficulty: 1, description: "絶望要塞を初めてプレイする", done: false, date: null },
+　　{ title: "ソロモード", difficulty: 1, description: "一人でプレイする", done: false, date: null },
+    { title: "デュオモード", difficulty: 1, description: "二人でプレイする", done: false, date: null },
+    { title: "トリオモード", difficulty: 1, description: "三人でプレイする", done: false, date: null },
+    { title: "開凸要塞", difficulty: 2, description: "その日一番最初にプレイする", done: false, date: null },
+    { title: "ラストプレイヤー", difficulty: 2, description: "その日一番最後にプレイする", done: false, date: null },
+//1st
+    { title: "次へ進みたまえ", difficulty: 1, description: "1stステージをクリアする", done: false, date: null },
+    { title: "電光石火", difficulty: 2, description: "だるまさんがころんだを80秒以上残してクリアする", done: false, date: null },
+    { title: "スーパーハイハイ", difficulty: 3, description: "一度も屈まずにハイハイをクリアする", done: false, date: null },
+    { title: "デュオスーパーハイハイ", difficulty: 4, description: "二人プレイで一度も屈まずにハイハイをクリアする", done: false, date: null },
+    { title: "テトリス", difficulty: 3, description: "ソロプレイでパズルを90秒以上残してクリアする", done: false, date: null },   
+    { title: "プロの一筆", difficulty: 2, description: "一筆書きを105秒以上残してクリアする", done: false, date: null },
+//2nd
+    { title: "ショーらしく", difficulty: 1, description: "2ndステージをクリアする", done: false, date: null },
+    { title: "見聞色の覇気", difficulty: 2, description: "大繩跳びで100点を取る", done: false, date: null },
+    { title: "読み方は知らない", difficulty: 2, description: "イライラ本で100点を取る", done: false, date: null },
+    { title: "かくれんな", difficulty: 2, description: "かくれんぼで60点を取る", done: false, date: null },
+    { title: "千里眼", difficulty: 6, description: "かくれんぼで100点を取る", done: false, date: null },
+    { title: "東大卒業", difficulty: 2, description: "旗揚げで100点を取る", done: false, date: null },
+    { title: "ラッキー？", difficulty: 2, description: "シークレットゲームをプレイする", done: false, date: null },
+//3rd
+    { title: "ソロ4th", difficulty: 3, description: "ソロプレイで3rdステージをクリアする", done: false, date: null },    
+    { title: "上手すぎて絶望", difficulty: 3, description: "玉詰まりを起こす", done: false, date: null },
+    { title: "シューズシューター", difficulty: 3, description: "玉入れのゴールに靴を入れる", done: false, date: null },
+    { title: "ピッチングマシン", difficulty: 4, description: "120秒以内に一人で34球、玉を入れる", done: false, date: null },
+    { title: "プロ選手", difficulty: 5, description: "120秒以内に一人で50球、玉を入れる", done: false, date: null },
+    { title: "組みたい人材", difficulty: 3, description: "♣♠♥全ての位置でミサイルを4発当てる", done: false, date: null },
+    { title: "ホールインワン", difficulty: 3, description: "30コインを入れる", done: false, date: null },
+    { title: "曲芸師", difficulty: 4, description: "ソロプレイで紙風船を3個乗せる", done: false, date: null },
+    { title: "Despair Castle", difficulty: 4, description: "ジャッキを最上段まで上げきる", done: false, date: null },
+    { title: "3rd stage マスター", difficulty: 5, description: "3rdステージで194点以上を取る", done: false, date: null },
+    { title: "幻の6点", difficulty: 7, description: "ポンプで100点を取る", done: false, date: null },
+//4th
+    { title: "ここまでがチュートリアル", difficulty: 3, description: "Wの表面をクリアする", done: false, date: null },
+    { title: "速攻", difficulty: 4, description: "W表面を1球突破する", done: false, date: null },
+    { title: "block bursting", difficulty: 5, description: "ブロック崩しをクリアする", done: false, date: null },
+    { title: "最高のショー", difficulty: 6, description: "ルーレットの値が54の時にWをクリアする", done: false, date: null },
+    { title: "案内人を待て！", difficulty: 5, description: "シーソーをクリアする", done: false, date: null },
+    { title: "第二のQライン", difficulty: 3, description: "4th裏で8組以上待つ", done: false, date: null },
+//5th
+    { title: "it's showtime", difficulty: 5, description: "だるま落とし1stをクリアする", done: false, date: null },
+    { title: "感動のフィナーレ", difficulty: 6, description: "だるま落とし2ndをクリアする", done: false, date: null },
+    { title: "絶望をありがとう", difficulty: 6, description: "Zで絶望する", done: false, date: null },
+    { title: "希望", difficulty: 7, description: "Zをクリアする", done: false, date: null },
+    { title: "パンドラの箱", difficulty: 7, description: "Zにある金庫を開ける", done: false, date: null },
+
+   
+    { title: "絶望マニア", difficulty: 2, description: "絶望回数が100回を超える", done: false, date: null },
+    { title: "絶望名人", difficulty: 3, description: "絶望回数が300回を超える", done: false, date: null },
+    { title: "絶望の達人", difficulty: 4, description: "絶望回数が500回を超える", done: false, date: null },
+    { title: "超高校級の絶望", difficulty: 5, description: "絶望回数が1000回を超える", done: false, date: null },
+    { title: "絶望マスター", difficulty: 6, description: "絶望回数が1500回を超える", done: false, date: null },
+    { title: "トップランナー", difficulty: 6, description: "総合得点が900点を超える", done: false, date: null },
+    { title: "成金要塞", difficulty: 3, description: "絶叫優先権を50枚以上購入する", done: false, date: null },
+    { title: "石の上にも三年", difficulty: 3, description: "Qラインで150分以上待つ", done: false, date: null },
+    { title: "命知らず", difficulty: 4, description: "台風または大雪の日にプレイする", done: false, date: null }
+  ];
+
+  function saveState() {
+    localStorage.setItem('fixedAchievements', JSON.stringify(achievements));
+  }
+
+  function loadState() {
+    const stored = JSON.parse(localStorage.getItem('fixedAchievements'));
+    if (stored) {
+      for (let i = 0; i < achievements.length; i++) {
+        achievements[i].done = stored[i]?.done || false;
+        achievements[i].date = stored[i]?.date || null;
+      }
+    }
+  }
+
+  function renderAchievements() {
+    const filter = document.getElementById('filterSelect')?.value || 'all';
+    list.innerHTML = '';
+
+    achievements.forEach((item, i) => {
+      if (filter === 'done' && !item.done) return;
+      if (filter === 'undone' && item.done) return;
+      if (filter.startsWith('star')) {
+        const star = parseInt(filter.replace('star', ''), 10);
+        if (item.difficulty !== star) return;
+      }
+
+      const li = document.createElement('li');
+      li.className = item.done ? 'done' : '';
+      li.innerHTML = `
+  <div class="trophy-title">
+    ${item.title}
+    ${item.done ? `<div class="stamp">達成</div>` : ''}
+  </div>
+  <div class="stars">難易度: ${'★'.repeat(item.difficulty)}</div>
+  <div class="desc">${item.description}</div>
+  ${item.done ? `
+    <div class="date-label">
+      達成日:
+      <input type="date" value="${item.date || ''}" onchange="updateDate(${i}, this.value)" />
+    </div>` : ''}
+`;
+
+      li.onclick = (e) => {
+        if (e.target.tagName === 'INPUT') return; // 日付変更時は処理を無効化
+
+        if (item.done) {
+          const confirmReset = confirm(`${item.title} は既に達成済みです。\n未達成に戻しますか？`);
+          if (!confirmReset) return;
+          item.done = false;
+          item.date = null;
+        } else {
+          item.done = true;
+          item.date = new Date().toISOString().split('T')[0];
+          showTrophy(item.title, item.difficulty);
+        }
+
+        saveState();
+        renderAchievements();
+        updateStats();
+      };
+
+      list.appendChild(li);
+    });
+  }
+
+  function updateDate(index, value) {
+    achievements[index].date = value;
+    saveState();
+    renderAchievements(); // 即時更新
+  }
+
+  function showTrophy(name, difficulty) {
+    modalMsg.innerHTML = `<strong>${name}</strong>（難易度：${'★'.repeat(difficulty)}）を達成！`;
+    modal.classList.add('show');
+    setTimeout(() => modal.classList.remove('show'), 2000);
+  }
+
+  function updateStats() {
+    const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7:0 };
+    const totals = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7:0 };
+    achievements.forEach(a => {
+      totals[a.difficulty] = (totals[a.difficulty] || 0) + 1;
+      if (a.done) counts[a.difficulty] = (counts[a.difficulty] || 0) + 1;
+    });
+
+    let html = '<h2>🏁 トロフィー取得状況</h2><ul>';
+    for (let d = 1; d <= 7; d++) {
+      if (totals[d]) {
+        const got = counts[d];
+        const total = totals[d];
+        const rate = total > 0 ? Math.round((got / total) * 100) : 0;
+        html += `<li>★${d}：${got} / ${total}（${rate}%）</li>`;
+      }
+    }
+    html += '</ul>';
+    stats.innerHTML = html;
+  }
+
+  function savePlayerName() {
+    const name = playerNameInput.value.trim();
+    if (name) {
+      localStorage.setItem('playerName', name);
+      playerDisplay.textContent = `ようこそ、${name}さん！`;
+    }
+  }
+
+  function loadPlayerName() {
+    const name = localStorage.getItem('playerName');
+    if (name) {
+      playerDisplay.textContent = `ようこそ、${name}さん！`;
+      playerNameInput.value = name;
+    }
+  }
+
+  // 初期化
+  loadState();
+  loadPlayerName();
+  renderAchievements();
+  updateStats();
+</script>
+
+<script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-analytics.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyAq4qFDMXs1FeZsbq6Hjw5KsJu0eLLh23I",
+    authDomain: "impossible-zby.firebaseapp.com",
+    projectId: "impossible-zby",
+    storageBucket: "impossible-zby.firebasestorage.app",
+    messagingSenderId: "810576974002",
+    appId: "1:810576974002:web:c9501bf235da3bcf9e39ab",
+    measurementId: "G-PP46F121DB"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+</script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
